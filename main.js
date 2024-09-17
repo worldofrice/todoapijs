@@ -20,25 +20,27 @@ async function displayTasks() {
 
 	tasks = (await getTasks(token)) ?? [];
 
-	console.log(tasks);
 	if (Array.isArray(tasks)) {
 		tasks.forEach(renderTask);
 	}
 
 	// kui nuppu vajutatakse siis lisatakse uus task
-	addTask.addEventListener("click", async function handleAddTask() {
-		const task = await createTask(token); // Teeme kõigepealt lokaalsesse "andmebaasi" uue taski
-		const taskRow = createTaskRow(task); // Teeme uue taski HTML elementi mille saaks lehe peale listi lisada
-		taskList.appendChild(taskRow); // Lisame taski lehele
-	});
+	addTask.addEventListener(
+		"click",
+		(addTask.fn = async function handleAddTask() {
+			const task = await createTask(token); // Teeme kõigepealt lokaalsesse "andmebaasi" uue taski
+			const taskRow = createTaskRow(task); // Teeme uue taski HTML elementi mille saaks lehe peale listi lisada
+			taskList.appendChild(taskRow); // Lisame taski lehele
+		}),
+	);
 
 	logOut.addEventListener("click", async function handleLogOut() {
 		token = null;
 		sessionStorage.removeItem("token");
 		headers.Authorization = `Bearer ${token}`;
-    taskList.replaceChildren();
+		taskList.replaceChildren();
 
-		addTask.removeEventListener("click", addTask.handleAddTask);
+		addTask.removeEventListener("click", addTask.fn);
 		this.removeEventListener("click", handleLogOut);
 
 		tasks = [];
@@ -131,9 +133,9 @@ function renderTask(task) {
 }
 
 async function createTask() {
-	let response;
+	let data;
 	try {
-		response = await fetch(`https://demo2.z-bit.ee/tasks`, {
+		data = await fetch(`https://demo2.z-bit.ee/tasks`, {
 			method: "POST",
 			headers: headers,
 			body: JSON.stringify({
@@ -155,9 +157,9 @@ async function createTask() {
 		return null;
 	}
 	const task = {
-		id: response.id,
-		name: response.title,
-		completed: response.marked_as_done,
+		id: data.id,
+		name: data.title,
+		completed: data.marked_as_done,
 	};
 	tasks.push(task);
 
@@ -374,6 +376,7 @@ async function getTasks() {
 
 		return null;
 	} catch (error) {
+		console.log(error);
 		return null;
 	}
 }
